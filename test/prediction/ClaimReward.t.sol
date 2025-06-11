@@ -46,14 +46,14 @@ contract ClaimRewardTest is PredictionSetup {
         predictionMarket.closeMarket(marketId1, 1);
 
         // オーナーは200ファントークンを引き出す
-        assertEq(mockFanToken.balanceOf(address(owner)), 10000 * 1e18);
+        assertEq(mockFanToken.balanceOf(address(owner)), 10001 * 1e18);
 
         vm.stopPrank();
     }
 
     // アリスが報酬を請求する
     function testClaimReward() public {
-        assertEq(mockFanToken.balanceOf(address(predictionMarket)), 201000000000000000000);
+        assertEq(mockFanToken.balanceOf(address(predictionMarket)), 200000000000000000000);
 
         // アリスが報酬を請求する
         vm.startPrank(alice);
@@ -64,7 +64,7 @@ contract ClaimRewardTest is PredictionSetup {
 
         // アプリは104で2ベット購入し、最終的に200を獲得
         assertEq(mockFanToken.balanceOf(alice), 296 * 1e18);
-        assertEq(mockFanToken.balanceOf(address(predictionMarket)), 1000000000000000000);
+        assertEq(mockFanToken.balanceOf(address(predictionMarket)), 0);
     }
 
     // 報酬が0の場合はリバートする

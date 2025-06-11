@@ -15,7 +15,7 @@ contract BetTest is PredictionSetup {
         mockFanToken.mint(alice, 100 * 1e18);
         mockFanToken.approve(address(predictionMarket), 100 * 1e18);
 
-        uint256 price1 = predictionMarket.getCurrentPrice(marketId1, 1, 1e18);
+        uint256 price1 = predictionMarket.getPurchaseCost(marketId1, 1, 1e18);
         assertEq(price1, 507811228765283568);
 
         predictionMarket.bet(marketId1, 1, 1e18);

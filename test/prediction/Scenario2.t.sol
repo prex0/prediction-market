@@ -39,7 +39,7 @@ contract Scenario2Test is PredictionSetup {
 
         vm.stopPrank();
 
-        assertEq(predictionMarket.getCurrentPrice(marketId1, 1, 30 * 1e18), 21192446032730499392);
+        assertEq(predictionMarket.getPurchaseCost(marketId1, 1, 30 * 1e18), 21192446032730499392);
         // aliceがベット
         vm.startPrank(alice);
 

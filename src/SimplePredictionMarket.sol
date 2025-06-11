@@ -102,7 +102,7 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
         string description
     );
     event BetPlaced(uint256 indexed marketId, address indexed user, uint8 optionId, uint256 amount, uint256 entryPrice);
-    event MarketClosed(uint256 indexed marketId, uint8 oracleIndex);
+    event MarketClosed(uint256 indexed marketId, uint8 oracleIndex, uint256 lpBalance);
     event LogMarketExpired(uint256 indexed marketId);
     event RewardClaimed(uint256 indexed marketId, address indexed user, uint8 optionId, uint256 amount);
     event MarketExpiredRedeemed(uint256 indexed marketId, address indexed user, uint256 amount);
@@ -135,22 +135,22 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
     }
 
     /**
-     * @notice 現在の選択肢の価格を取得する
+     * @notice ベットするためのコストを取得する
      * @param marketId 予測市場のID
      * @param oracleIndex 正解のオラクルインデックス
-     * @return 現在の価格
+     * @return ベットするためのコスト
      */
-    function getCurrentPrice(uint256 marketId, uint8 oracleIndex, uint256 portion) public view returns (uint256) {
-        return _getCurrentPrice(marketId, oracleIndex, portion);
+    function getPurchaseCost(uint256 marketId, uint8 oracleIndex, uint256 portion) public view returns (uint256) {
+        return _getPurchaseCost(marketId, oracleIndex, portion);
     }
 
     /**
-     * @notice 選択肢の現在価格を取得する
+     * @notice ベットするためのコストを取得する
      * @param marketId 予測市場のID
      * @param oracleIndex 正解のオラクルインデックス
-     * @return 現在の価格
+     * @return ベットするためのコスト
      */
-    function _getCurrentPrice(uint256 marketId, uint8 oracleIndex, uint256 portion) internal view returns (uint256) {
+    function _getPurchaseCost(uint256 marketId, uint8 oracleIndex, uint256 portion) internal view returns (uint256) {
         PredictionMarket memory market = markets[marketId];
 
         uint256 yes = market.optionShares[1];
@@ -171,15 +171,17 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
     }
 
     /**
-     * @notice オーナーが支払うコストを計算する
+     * @notice 流動性提供者の残高を計算する
      * @param marketId 予測市場のID
-     * @return オーナーが支払うコスト
+     * @return 流動性提供者の残高
      */
-    function _calcLiquidityProviderCost(uint256 marketId) internal view returns (uint256) {
+    function _calcLiquidityProviderBalance(uint256 marketId) internal view returns (uint256) {
         PredictionMarket memory market = markets[marketId];
 
         uint256 yes = market.optionShares[0];
         uint256 no = market.optionShares[1];
+
+        // 勝者に支払う報酬
         uint256 reward = 0;
 
         if (market.winningOptionIndex == 0) {
@@ -188,11 +190,7 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
             reward = no * market.entryAmount / PRICE_PRECISION;
         }
 
-        if (reward < market.traderBetAmount) {
-            return 0;
-        }
-
-        return reward - market.traderBetAmount;
+        return market.entryAmount * LP_MULTIPLIER + market.traderBetAmount - reward;
     }
 
     /**
@@ -270,11 +268,7 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
             revert InvalidInput();
         }
 
-        uint256 currentPrice = _getCurrentPrice(marketId, optionId, portion);
-
-        //if (currentPrice > PRICE_PRECISION) {
-        //    revert InvalidPrice();
-        //}
+        uint256 currentPrice = _getPurchaseCost(marketId, optionId, portion);
 
         uint256 entryAmount = AmountMathLib.ceil(currentPrice * market.entryAmount / PRICE_PRECISION, 1e18);
 
@@ -319,17 +313,11 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
         market.winningOptionIndex = oracleIndex;
 
         // マーケット作成者が、資金を回収する
-        uint256 lpCost = AmountMathLib.ceil(_calcLiquidityProviderCost(marketId), 1e18);
+        uint256 lpBalance = AmountMathLib.ceil(_calcLiquidityProviderBalance(marketId), 1e18);
 
-        if (_isMarketWinning(marketId, oracleIndex)) {
-            // 市場が勝っている
-            ERC20(market.paymentToken).safeTransfer(msg.sender, market.entryAmount * LP_MULTIPLIER - lpCost);
-        } else {
-            // 市場が負けている
-            ERC20(market.paymentToken).safeTransfer(msg.sender, market.entryAmount * LP_MULTIPLIER + lpCost);
-        }
+        ERC20(market.paymentToken).safeTransfer(msg.sender, lpBalance);
 
-        emit MarketClosed(marketId, oracleIndex);
+        emit MarketClosed(marketId, oracleIndex, lpBalance);
     }
 
     function _isMarketWinning(uint256 marketId, uint8 winningOptionIndex) internal view returns (bool) {
