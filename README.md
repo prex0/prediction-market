@@ -1,66 +1,37 @@
-## Foundry
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+# シンプル予測市場
 
-Foundry consists of:
+## 概要
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+シンプル予測市場は、ユーザーが予測市場を作成し、参加できる分散型アプリケーションです。ユーザーは指定されたオプションにベットし、市場が終了した後、勝利したオプションにベットしたユーザーのみが報酬を受け取ります。オラクルが設定されずに`oracleDuration`が経過した場合、市場は期限切れとなり、解約可能です。
 
-## Documentation
+## 特徴
 
-https://book.getfoundry.sh/
+- **市場の作成**: ユーザーはトークン、名前、説明、期限、オプション、エントリー金額、オラクル期間などのカスタムパラメータで予測市場を作成できます。
+- **ベッティング**: 参加者は市場内の異なるオプションにベットを行うことができます。
+- **市場のステータス**: 市場は、NotStarted、Active、Closed、OracleTimedOutの様々なステータスを経て遷移します。
+- **オラクル統合**: 指定された期間内にオラクルが設定されない場合、市場は期限切れとなります。
 
-## Usage
+## コントラクト
 
-### Build
+### SimplePredictionMarket.sol
 
-```shell
-$ forge build
-```
+- **市場管理**: 予測市場の作成と管理を行います。
+- **ベッティングロジック**: ユーザーがベットを行い、報酬の分配を管理します。
+- **セキュリティ**: `ReentrancyGuardUpgradeable`を使用してリエントランシー攻撃を防ぎます。
 
-### Test
+### ライブラリ
 
-```shell
-$ forge test
-```
+- **AmountMathLib**: 精度を持った金額を扱うための数学関数を提供します。
+- **LMSRLib**: 予測市場のためのLMSRコスト関数と価格設定を実装します。
 
-### Format
+## デプロイ
 
-```shell
-$ forge fmt
-```
+デプロイスクリプト`DeploySimplePredictionMarketScript`は、透明なアップグレード可能なプロキシパターンを使用して`SimplePredictionMarket`コントラクトをデプロイするために使用されます。スクリプトは検証のためにデプロイされたコントラクトのアドレスをログに記録します。
 
-### Gas Snapshots
+## 使用方法
 
-```shell
-$ forge snapshot
-```
+コントラクトのABIを抽出するには、`abi.sh`スクリプトを使用します。
 
-### Anvil
 
-```shell
-$ anvil
-```
 
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```

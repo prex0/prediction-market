@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import {Script, console} from "forge-std/Script.sol";
 import {SimplePredictionMarket} from "../src/SimplePredictionMarket.sol";
-import "../lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import "../lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract DeploySimplePredictionMarketScript is Script {
     SimplePredictionMarket public simplePredictionMarket;
