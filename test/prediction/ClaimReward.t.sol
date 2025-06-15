@@ -19,7 +19,7 @@ contract ClaimRewardTest is PredictionSetup {
         mockFanToken.mint(alice, 200 * 1e18);
         mockFanToken.approve(address(predictionMarket), 200 * 1e18);
 
-        predictionMarket.bet(marketId1, 1, 2 * 1e18);
+        predictionMarket.bet(marketId1, 1, 2 * 1e18, type(uint256).max);
 
         // 104 cost
         assertEq(mockFanToken.balanceOf(alice), 96 * 1e18);
@@ -32,7 +32,7 @@ contract ClaimRewardTest is PredictionSetup {
         mockFanToken.mint(bob, 200 * 1e18);
         mockFanToken.approve(address(predictionMarket), 200 * 1e18);
 
-        predictionMarket.bet(marketId1, 0, 2 * 1e18);
+        predictionMarket.bet(marketId1, 0, 2 * 1e18, type(uint256).max);
 
         // 97 cost
         assertEq(mockFanToken.balanceOf(bob), 103 * 1e18);

@@ -19,7 +19,7 @@ contract ScenarioTest is PredictionSetup {
         mockFanToken.mint(alice, 200 * 1e18);
         mockFanToken.approve(address(predictionMarket), 200 * 1e18);
 
-        predictionMarket.bet(marketId1, 1, 3 * 1e18);
+        predictionMarket.bet(marketId1, 1, 3 * 1e18, type(uint256).max);
 
         // 158 cost
         assertEq(mockFanToken.balanceOf(alice), 42 * 1e18);
@@ -32,7 +32,7 @@ contract ScenarioTest is PredictionSetup {
         mockFanToken.mint(bob, 200 * 1e18);
         mockFanToken.approve(address(predictionMarket), 200 * 1e18);
 
-        predictionMarket.bet(marketId1, 0, 2 * 1e18);
+        predictionMarket.bet(marketId1, 0, 2 * 1e18, type(uint256).max);
 
         // 94 cost
         assertEq(mockFanToken.balanceOf(bob), 106 * 1e18);

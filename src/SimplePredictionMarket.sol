@@ -90,6 +90,7 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
     error NoReward();
     error InvalidInput();
     error InvalidPrice();
+    error SlippageExceeded();
 
     // events
     event PredictionMarketCreated(
@@ -246,8 +247,10 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
      * @notice 予測市場にベットする
      * @param marketId 予測市場のID
      * @param optionId ベットするオプションのID
+     * @param portion ベットする部分
+     * @param maxCost 支払い可能な最大コスト（スリッページ保護）
      */
-    function bet(uint256 marketId, uint8 optionId, uint256 portion) public nonReentrant {
+    function bet(uint256 marketId, uint8 optionId, uint256 portion, uint256 maxCost) public nonReentrant {
         PredictionMarket memory market = markets[marketId];
 
         if (market.status != MarketStatus.Active) {
@@ -258,10 +261,10 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
             revert MarketExpired();
         }
 
-        _bet(marketId, optionId, portion);
+        _bet(marketId, optionId, portion, maxCost);
     }
 
-    function _bet(uint256 marketId, uint8 optionId, uint256 portion) internal {
+    function _bet(uint256 marketId, uint8 optionId, uint256 portion, uint256 maxCost) internal {
         PredictionMarket storage market = markets[marketId];
 
         if (optionId >= market.optionLabels.length) {
@@ -271,6 +274,10 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
         uint256 currentPrice = _getPurchaseCost(marketId, optionId, portion);
 
         uint256 entryAmount = AmountMathLib.ceil(currentPrice * market.entryAmount / PRICE_PRECISION, 1e18);
+
+        if (entryAmount > maxCost) {
+            revert SlippageExceeded();
+        }
 
         __bet(marketId, msg.sender, optionId, portion, entryAmount);
     }

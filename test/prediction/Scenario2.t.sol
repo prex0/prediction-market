@@ -19,7 +19,7 @@ contract Scenario2Test is PredictionSetup {
         mockFanToken.mint(alice, 20000 * 1e18);
         mockFanToken.approve(address(predictionMarket), 20000 * 1e18);
 
-        predictionMarket.bet(marketId1, 1, 30 * 1e18);
+        predictionMarket.bet(marketId1, 1, 30 * 1e18, type(uint256).max);
 
         // 2120 cost / 30 = 70.666666666666666666666666666666666666
         //assertEq(mockFanToken.balanceOf(alice), 7880 * 1e18);
@@ -32,7 +32,7 @@ contract Scenario2Test is PredictionSetup {
         mockFanToken.mint(bob, 2000 * 1e18);
         mockFanToken.approve(address(predictionMarket), 2000 * 1e18);
 
-        predictionMarket.bet(marketId1, 0, 30 * 1e18);
+        predictionMarket.bet(marketId1, 0, 30 * 1e18, type(uint256).max);
 
         // 881 cost / 30 = 29.366666666666666666666666666666666666
         assertEq(mockFanToken.balanceOf(bob), 1119 * 1e18);
@@ -43,7 +43,7 @@ contract Scenario2Test is PredictionSetup {
         // aliceがベット
         vm.startPrank(alice);
 
-        predictionMarket.bet(marketId1, 1, 100 * 1e18);
+        predictionMarket.bet(marketId1, 1, 100 * 1e18, type(uint256).max);
 
         // 2120 cost / 30 = 70.666666666666666666666666666666666666
         assertEq(mockFanToken.balanceOf(alice), 8985 * 1e18);

@@ -18,7 +18,7 @@ contract BetTest is PredictionSetup {
         uint256 price1 = predictionMarket.getPurchaseCost(marketId1, 1, 1e18);
         assertEq(price1, 507811228765283568);
 
-        predictionMarket.bet(marketId1, 1, 1e18);
+        predictionMarket.bet(marketId1, 1, 1e18, type(uint256).max);
 
         assertEq(mockFanToken.balanceOf(alice), 49 * 1e18);
 
@@ -33,7 +33,7 @@ contract BetTest is PredictionSetup {
         mockFanToken.approve(address(predictionMarket), 100 * 1e18);
 
         vm.expectRevert(abi.encodeWithSelector(SimplePredictionMarket.InvalidInput.selector));
-        predictionMarket.bet(marketId1, 5, 1e18);
+        predictionMarket.bet(marketId1, 5, 1e18, type(uint256).max);
 
         vm.stopPrank();
     }

@@ -13,7 +13,7 @@ contract CloseMarketTest is PredictionSetup {
         mockFanToken.mint(alice, 1000 * 1e18);
         mockFanToken.approve(address(predictionMarket), 1000 * 1e18);
 
-        predictionMarket.bet(marketId1, 1, 1e18);
+        predictionMarket.bet(marketId1, 1, 1e18, type(uint256).max);
         vm.stopPrank();
     }
 

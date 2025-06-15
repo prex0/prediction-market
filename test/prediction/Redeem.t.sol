@@ -17,7 +17,7 @@ contract RedeemTest is PredictionSetup {
         mockFanToken.mint(alice, 100 * 1e18);
         mockFanToken.approve(address(predictionMarket), 100 * 1e18);
 
-        predictionMarket.bet(marketId1, 1, 1e18);
+        predictionMarket.bet(marketId1, 1, 1e18, type(uint256).max);
         vm.stopPrank();
 
         // bobがベット
@@ -26,7 +26,7 @@ contract RedeemTest is PredictionSetup {
         mockFanToken.mint(bob, 100 * 1e18);
         mockFanToken.approve(address(predictionMarket), 100 * 1e18);
 
-        predictionMarket.bet(marketId1, 0, 1e18);
+        predictionMarket.bet(marketId1, 0, 1e18, type(uint256).max);
         vm.stopPrank();
 
         vm.warp(block.timestamp + 1 days);
