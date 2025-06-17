@@ -80,7 +80,7 @@ contract RedeemTest is PredictionSetup {
     // 市場作成者が期限切れ後にLPを解約できる
     function testRedeemLiquidityProvider() public {
         uint256 lpAmount = 100 * 1e18 * 12; // entryAmount * LP_MULTIPLIER
-        
+
         // 期限切れまで待つ
         vm.warp(block.timestamp + 14 days);
 

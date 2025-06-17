@@ -9,7 +9,7 @@ contract MultiOptionTest is PredictionSetup {
 
     function setUp() public override {
         super.setUp();
-        
+
         // Create a market with 3 options
         vm.startPrank(owner);
         marketId3Options = createMarketWith3Options();

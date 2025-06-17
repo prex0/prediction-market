@@ -103,7 +103,9 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
         string description
     );
     event OptionAdded(uint256 indexed marketId, uint8 optionId, string optionLabel);
-    event BetPlaced(uint256 indexed marketId, address indexed user, uint8 optionId, uint256 stakeAmount, uint256 portion);
+    event BetPlaced(
+        uint256 indexed marketId, address indexed user, uint8 optionId, uint256 stakeAmount, uint256 portion
+    );
     event MarketClosed(uint256 indexed marketId, uint8 oracleIndex, uint256 lpBalance);
     event LogMarketExpired(uint256 indexed marketId);
     event RewardClaimed(uint256 indexed marketId, address indexed user, uint8 optionId, uint256 rewardAmount);
@@ -159,13 +161,13 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
         // Create arrays for current and future states
         uint256[] memory quantityBefore = new uint256[](market.optionShares.length);
         uint256[] memory quantityAfter = new uint256[](market.optionShares.length);
-        
+
         // Copy current shares
         for (uint256 i = 0; i < market.optionShares.length; i++) {
             quantityBefore[i] = market.optionShares[i];
             quantityAfter[i] = market.optionShares[i];
         }
-        
+
         // Add portion to the selected option
         quantityAfter[oracleIndex] += portion;
 
@@ -325,7 +327,7 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
 
         emit MarketClosed(marketId, oracleIndex, lpBalance);
     }
-    
+
     /**
      * @notice 報酬を請求する
      * @param marketId 予測市場のID
@@ -405,7 +407,7 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
             revert MarketNotTimedOut();
         }
 
-        if(market.creator != user) {
+        if (market.creator != user) {
             revert OnlyCreator();
         }
 

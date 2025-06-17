@@ -5,7 +5,7 @@ import {wadLn, wadExp} from "../../lib/solmate/src/utils/SignedWadMath.sol";
 
 library LMSRLib {
     uint256 constant SCALE = 1e18;
-    
+
     // Computes LMSR cost function: C = b * log(exp(q_yes / b) + exp(q_no / b))
     function calcCost(uint256[] memory quantity, uint256 b) internal pure returns (uint256) {
         uint256 total = 0;
