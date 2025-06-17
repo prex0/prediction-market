@@ -76,4 +76,66 @@ contract RedeemTest is PredictionSetup {
         predictionMarket.redeem(marketId1);
         vm.stopPrank();
     }
+
+    // 市場作成者が期限切れ後にLPを解約できる
+    function testRedeemLiquidityProvider() public {
+        uint256 lpAmount = 100 * 1e18 * 12; // entryAmount * LP_MULTIPLIER
+        
+        // 期限切れまで待つ
+        vm.warp(block.timestamp + 14 days);
+
+        uint256 ownerBalanceBefore = mockFanToken.balanceOf(owner);
+
+        vm.startPrank(owner);
+        predictionMarket.redeemLiquidityProvider(marketId1);
+        vm.stopPrank();
+
+        uint256 ownerBalanceAfter = mockFanToken.balanceOf(owner);
+        assertEq(ownerBalanceAfter - ownerBalanceBefore, lpAmount);
+
+        // aliceとbobが解約すると、市場の残高が0になる
+        vm.startPrank(bob);
+        predictionMarket.redeem(marketId1);
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+        predictionMarket.redeem(marketId1);
+        vm.stopPrank();
+
+        assertEq(mockFanToken.balanceOf(address(predictionMarket)), 0);
+    }
+
+    // 市場作成者以外はLPを解約できない
+    function testCannotRedeemLiquidityProvider_NotCreator() public {
+        vm.warp(block.timestamp + 14 days);
+
+        vm.startPrank(alice);
+        vm.expectRevert(abi.encodeWithSelector(SimplePredictionMarket.OnlyCreator.selector));
+        predictionMarket.redeemLiquidityProvider(marketId1);
+        vm.stopPrank();
+    }
+
+    // 期限切れになっていない場合はLPを解約できない
+    function testCannotRedeemLiquidityProvider_NotTimedOut() public {
+        vm.startPrank(owner);
+        vm.expectRevert(abi.encodeWithSelector(SimplePredictionMarket.MarketNotTimedOut.selector));
+        predictionMarket.redeemLiquidityProvider(marketId1);
+        vm.stopPrank();
+    }
+
+    // 市場が閉じられた場合はLPを解約できない
+    function testCannotRedeemLiquidityProvider_MarketClosed() public {
+        vm.warp(block.timestamp + 2 days);
+
+        vm.startPrank(owner);
+        predictionMarket.closeMarket(marketId1, 1);
+        vm.stopPrank();
+
+        vm.warp(block.timestamp + 7 days + 1);
+
+        vm.startPrank(owner);
+        vm.expectRevert(abi.encodeWithSelector(SimplePredictionMarket.MarketNotActive.selector));
+        predictionMarket.redeemLiquidityProvider(marketId1);
+        vm.stopPrank();
+    }
 }

@@ -108,6 +108,7 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
     event LogMarketExpired(uint256 indexed marketId);
     event RewardClaimed(uint256 indexed marketId, address indexed user, uint8 optionId, uint256 rewardAmount);
     event MarketExpiredRedeemed(uint256 indexed marketId, address indexed user, uint256 redeemAmount);
+    event LiquidityProviderRedeemed(uint256 indexed marketId, address indexed user, uint256 redeemAmount);
 
     modifier onlyCreator(uint256 marketId) {
         if (markets[marketId].creator != msg.sender) {
@@ -387,6 +388,32 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
         ERC20(market.paymentToken).safeTransfer(user, betAmount);
 
         emit MarketExpiredRedeemed(marketId, user, betAmount);
+    }
+
+    /**
+     * @notice 流動性提供者がLPを解約する
+     * @param marketId 予測市場のID
+     */
+    function redeemLiquidityProvider(uint256 marketId) public nonReentrant {
+        _expireMarketIfNeeded(marketId);
+
+        PredictionMarket memory market = markets[marketId];
+
+        address user = msg.sender;
+
+        if (market.status != MarketStatus.OracleTimedOut) {
+            revert MarketNotTimedOut();
+        }
+
+        if(market.creator != user) {
+            revert OnlyCreator();
+        }
+
+        uint256 lpBalance = market.entryAmount * LP_MULTIPLIER;
+
+        ERC20(market.paymentToken).safeTransfer(user, lpBalance);
+
+        emit LiquidityProviderRedeemed(marketId, user, lpBalance);
     }
 
     /**
