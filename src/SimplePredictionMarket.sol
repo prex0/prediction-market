@@ -102,11 +102,12 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
         string name,
         string description
     );
-    event BetPlaced(uint256 indexed marketId, address indexed user, uint8 optionId, uint256 amount, uint256 entryPrice);
+    event OptionAdded(uint256 indexed marketId, uint8 optionId, string optionLabel);
+    event BetPlaced(uint256 indexed marketId, address indexed user, uint8 optionId, uint256 stakeAmount, uint256 portion);
     event MarketClosed(uint256 indexed marketId, uint8 oracleIndex, uint256 lpBalance);
     event LogMarketExpired(uint256 indexed marketId);
-    event RewardClaimed(uint256 indexed marketId, address indexed user, uint8 optionId, uint256 amount);
-    event MarketExpiredRedeemed(uint256 indexed marketId, address indexed user, uint256 amount);
+    event RewardClaimed(uint256 indexed marketId, address indexed user, uint8 optionId, uint256 rewardAmount);
+    event MarketExpiredRedeemed(uint256 indexed marketId, address indexed user, uint256 redeemAmount);
 
     modifier onlyCreator(uint256 marketId) {
         if (markets[marketId].creator != msg.sender) {
@@ -154,19 +155,21 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
     function _getPurchaseCost(uint256 marketId, uint8 oracleIndex, uint256 portion) internal view returns (uint256) {
         PredictionMarket memory market = markets[marketId];
 
-        uint256 yes = market.optionShares[1];
-        uint256 no = market.optionShares[0];
-
-        uint256 yesAfter = yes;
-        uint256 noAfter = no;
-        if (oracleIndex == 0) {
-            noAfter += portion;
-        } else {
-            yesAfter += portion;
+        // Create arrays for current and future states
+        uint256[] memory quantityBefore = new uint256[](market.optionShares.length);
+        uint256[] memory quantityAfter = new uint256[](market.optionShares.length);
+        
+        // Copy current shares
+        for (uint256 i = 0; i < market.optionShares.length; i++) {
+            quantityBefore[i] = market.optionShares[i];
+            quantityAfter[i] = market.optionShares[i];
         }
+        
+        // Add portion to the selected option
+        quantityAfter[oracleIndex] += portion;
 
-        uint256 costBefore = LMSRLib.calcCost(yes, no, LMSR_B);
-        uint256 costAfter = LMSRLib.calcCost(yesAfter, noAfter, LMSR_B);
+        uint256 costBefore = LMSRLib.calcCost(quantityBefore, LMSR_B);
+        uint256 costAfter = LMSRLib.calcCost(quantityAfter, LMSR_B);
 
         return costAfter - costBefore;
     }
@@ -179,17 +182,8 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
     function _calcLiquidityProviderBalance(uint256 marketId) internal view returns (uint256) {
         PredictionMarket memory market = markets[marketId];
 
-        uint256 yes = market.optionShares[0];
-        uint256 no = market.optionShares[1];
-
         // 勝者に支払う報酬
-        uint256 reward = 0;
-
-        if (market.winningOptionIndex == 0) {
-            reward = yes * market.entryAmount / PRICE_PRECISION;
-        } else {
-            reward = no * market.entryAmount / PRICE_PRECISION;
-        }
+        uint256 reward = market.optionShares[market.winningOptionIndex] * market.entryAmount / PRICE_PRECISION;
 
         return market.entryAmount * LP_MULTIPLIER + market.traderBetAmount - reward;
     }
@@ -237,6 +231,10 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
         emit PredictionMarketCreated(
             marketId, creator, params.token, params.expiry, params.entryAmount, params.name, params.description
         );
+
+        for (uint8 i = 0; i < params.options.length; i++) {
+            emit OptionAdded(marketId, i, params.options[i]);
+        }
 
         ERC20(params.token).safeTransferFrom(msg.sender, address(this), params.entryAmount * LP_MULTIPLIER);
 
@@ -326,18 +324,7 @@ contract SimplePredictionMarket is BaseDispatcher, ReentrancyGuardUpgradeable {
 
         emit MarketClosed(marketId, oracleIndex, lpBalance);
     }
-
-    function _isMarketWinning(uint256 marketId, uint8 winningOptionIndex) internal view returns (bool) {
-        PredictionMarket memory market = markets[marketId];
-        bool isYesMajority = market.optionShares[0] > market.optionShares[1];
-
-        if (winningOptionIndex == 0) {
-            return isYesMajority;
-        } else {
-            return !isYesMajority;
-        }
-    }
-
+    
     /**
      * @notice 報酬を請求する
      * @param marketId 予測市場のID

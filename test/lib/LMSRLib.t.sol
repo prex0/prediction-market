@@ -10,8 +10,11 @@ contract WrappedLMSRLib {
     uint256 nn = 0;
     uint256 b = 16000 * 1e18;
 
-    function calcCost(uint256 qYes, uint256 qNo) external view returns (uint256) {
-        return LMSRLib.calcCost(qYes, qNo, b);
+    function calcCost(uint256 qYes, uint256 qNo) public view returns (uint256) {
+        uint256[] memory quantity = new uint256[](2);
+        quantity[0] = qYes;
+        quantity[1] = qNo;
+        return LMSRLib.calcCost(quantity, b);
     }
 
     function calcSubsidy() external view returns (uint256) {
@@ -19,7 +22,7 @@ contract WrappedLMSRLib {
     }
 
     function calcRequiredCost(uint256 y, uint256 n) external returns (uint256) {
-        uint256 cost = LMSRLib.calcCost(yy + y, nn + n, b) - LMSRLib.calcCost(yy, nn, b);
+        uint256 cost = calcCost(yy + y, nn + n) - calcCost(yy, nn);
         yy += y;
         nn += n;
         return AmountMathLib.ceil(cost, 1e18);
